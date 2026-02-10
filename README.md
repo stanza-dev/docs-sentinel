@@ -1,31 +1,31 @@
 # 📄 docs-sentinel 🐶
 
-Keep documentation fresh by tracking references between markdown files and source code.
+Keep your AI context docs (`./docs/`) in sync with source code — so AI coding tools always work with accurate, up-to-date context.
 
 ![banner-docs-sentinel-compressed](https://github.com/user-attachments/assets/6710fa58-dfe5-47c5-b4af-e827df63cf3a)
 
 
-docs-sentinel scans your `./docs/` directory, extracts file path references from markdown content, and warns you when referenced source files change — so your docs never silently go stale.
+docs-sentinel scans the markdown files that AI tools like Claude Code and Cursor rely on for project context, extracts source file references, and warns you when those files change — so your AI docs never silently go stale.
 
 ## Features
 
-- **Reference extraction** — Automatically finds source file paths in markdown (backtick-wrapped, bare paths, markdown links)
-- **Frontmatter management** — Adds YAML frontmatter with status, category, references, and verification date
-- **Staleness detection** — Uses git history to flag docs whose referenced files have changed
-- **Health audit** — Computes a documentation health score (0–100) for CI gating
-- **Tool integrations** — Auto-configures Claude Code hooks, Cursor rules, VS Code tasks
+- **Reference extraction** — Detects source file paths referenced in your AI docs (backtick-wrapped, bare paths, markdown links)
+- **Frontmatter management** — Adds YAML frontmatter with status, category, references, and verification date to each doc
+- **Staleness detection** — Uses git history to flag AI docs whose referenced source files have changed
+- **Health audit** — Computes a health score (0–100) across your AI docs for CI gating
+- **Tool integrations** — Plugs directly into Claude Code hooks, Cursor rules, and VS Code tasks
 - **Language-agnostic** — Works with any codebase (JS/TS, Go, Rust, Python, Ruby, PHP, etc.)
 
 ## Quick Start
 
 ```bash
-# In your project root (must have a ./docs/ directory)
+# In your project root (must have a ./docs/ directory with AI context files)
 npx docs-sentinel init
 
-# Check which docs reference a changed file
+# Check which AI docs reference a changed source file
 npx docs-sentinel check --file src/auth/auth.service.ts
 
-# Full documentation health audit
+# Audit the health of your AI docs
 npx docs-sentinel audit
 ```
 
@@ -33,7 +33,7 @@ npx docs-sentinel audit
 
 ### `init`
 
-Scans docs, adds frontmatter, and configures tool integrations.
+Scans your AI docs, adds frontmatter, and configures tool integrations.
 
 ```bash
 npx docs-sentinel init [options]
@@ -42,12 +42,12 @@ Options:
   --dry-run          Preview changes without modifying files
   --no-tools         Skip tool integration setup
   --no-frontmatter   Skip frontmatter generation
-  --docs-dir <path>  Documentation directory (default: ./docs)
+  --docs-dir <path>  AI docs directory (default: ./docs)
 ```
 
 ### `check`
 
-Check which docs reference a given source file.
+Find which AI docs reference a given source file.
 
 ```bash
 npx docs-sentinel check --file <path> [options]
@@ -59,7 +59,7 @@ Options:
 
 ### `audit`
 
-Full documentation health audit.
+Audit the health of all your AI docs.
 
 ```bash
 npx docs-sentinel audit [options]
@@ -90,18 +90,18 @@ Create `.docs-sentinel.json` in your project root (auto-created by `init`):
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `docsDir` | `./docs` | Documentation directory |
+| `docsDir` | `./docs` | AI docs directory |
 | `ignore` | `[]` | Glob patterns to ignore |
 | `staleThresholdDays` | `30` | Days before a doc is considered stale |
 | `archiveThresholdDays` | `90` | Days before a completed/deprecated doc is archivable |
-| `pathPrefixes` | (auto-detected) | Path prefixes to recognize as file references |
-| `sourceExtensions` | (comprehensive set) | File extensions to track |
+| `pathPrefixes` | (auto-detected) | Path prefixes to recognize as source file references |
+| `sourceExtensions` | (comprehensive set) | Source file extensions to track |
 | `frontmatterKey` | `null` | Namespace key for frontmatter (e.g. `"docs_sentinel"`) |
 | `maxFileSize` | `1048576` | Max file size in bytes (skip larger files) |
 
 ### Frontmatter namespacing
 
-If your docs already use frontmatter (Hugo, Jekyll, Docusaurus), set `frontmatterKey` to avoid conflicts:
+If your AI docs already use frontmatter, set `frontmatterKey` to avoid conflicts:
 
 ```json
 { "frontmatterKey": "docs_sentinel" }
@@ -124,11 +124,11 @@ docs_sentinel:
 
 ### Claude Code
 
-`init` creates a PostToolUse hook that runs `check` after every Write/Edit operation, surfacing affected docs directly in the AI conversation.
+`init` creates a PostToolUse hook that runs `check` after every Write/Edit operation, surfacing affected AI docs directly in the conversation.
 
 ### Cursor
 
-`init` creates `.cursor/rules/docs-sentinel.mdc` with instructions for the AI to check doc freshness.
+`init` creates `.cursor/rules/docs-sentinel.mdc` instructing the AI to check doc freshness when editing referenced source files.
 
 ### VS Code
 
@@ -145,13 +145,13 @@ import {
   parseFrontmatter,
 } from 'docs-sentinel';
 
-// Scan all docs
+// Scan all AI docs
 const docs = await scanDocs('/path/to/project', config);
 
-// Check a specific file
+// Check which AI docs reference a source file
 const result = await checkFile('src/auth.ts', '/path/to/project', config);
 
-// Full audit
+// Audit AI docs health
 const audit = await auditDocs('/path/to/project', config);
 console.log(`Health score: ${audit.healthScore}/100`);
 ```
