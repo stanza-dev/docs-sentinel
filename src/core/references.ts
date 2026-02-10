@@ -124,8 +124,6 @@ export function findDocsReferencingFile(
   docs: ScannedDoc[],
 ): ScannedDoc[] {
   const normalized = normalizeRef(sourceFile);
-  const basename = normalized.split('/').pop() ?? '';
-
   return docs.filter((doc) => {
     if (!doc.frontmatter) return false;
     return doc.frontmatter.references.some((ref) => {

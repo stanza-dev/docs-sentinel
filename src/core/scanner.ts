@@ -17,10 +17,6 @@ export async function scanDocs(
 
   const maxFileSize = config.maxFileSize ?? DEFAULT_CONFIG.maxFileSize!;
 
-  const ignorePatterns = config.ignore.map((p) =>
-    p.startsWith('!') ? p : `!${p}`,
-  );
-
   const files = await fg(['**/*.md', '**/*.mdx'], {
     cwd: docsDir,
     absolute: false,
