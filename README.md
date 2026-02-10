@@ -2,7 +2,7 @@
 
 Keep documentation fresh by tracking references between markdown files and source code.
 
-<img width="1281" height="644" alt="banner-docs-sentinel" src="https://github.com/user-attachments/assets/a0385e18-c19c-434f-a694-b9f7072a381d" />
+![banner-docs-sentinel-compressed](https://github.com/user-attachments/assets/6710fa58-dfe5-47c5-b4af-e827df63cf3a)
 
 
 docs-sentinel scans your `./docs/` directory, extracts file path references from markdown content, and warns you when referenced source files change — so your docs never silently go stale.
