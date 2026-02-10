@@ -16,6 +16,16 @@ docs-sentinel scans the markdown files that AI tools like Claude Code and Cursor
 - **Tool integrations** — Plugs directly into Claude Code hooks, Cursor rules, and VS Code tasks
 - **Language-agnostic** — Works with any codebase (JS/TS, Go, Rust, Python, Ruby, PHP, etc.)
 
+## Installation
+
+```bash
+# Run directly with npx (no install needed)
+npx docs-sentinel init
+
+# Or install as a dev dependency
+npm install -D docs-sentinel
+```
+
 ## Quick Start
 
 ```bash

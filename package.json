@@ -1,7 +1,7 @@
 {
   "name": "docs-sentinel",
   "version": "0.1.0",
-  "description": "Keep documentation fresh by tracking references between markdown files and source code",
+  "description": "Keep your AI context docs in sync with source code",
   "type": "module",
   "exports": {
     ".": {
