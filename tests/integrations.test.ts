@@ -6,6 +6,7 @@ import { detectTools, detectPackageManager, detectEcosystem } from '../src/integ
 import { setupClaudeCodeHook } from '../src/integrations/claude-code.js';
 import { setupCursorRule } from '../src/integrations/cursor.js';
 import { setupVSCodeTask } from '../src/integrations/vscode.js';
+import { stripJsoncComments } from '../src/integrations/jsonc.js';
 
 function makeTempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'docs-sentinel-test-'));
@@ -35,6 +36,20 @@ describe('detectPackageManager', () => {
     const dir = makeTempDir();
     fs.writeFileSync(path.join(dir, 'pnpm-lock.yaml'), '');
     expect(detectPackageManager(dir)).toBe('pnpm');
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it('detects bun from bun.lockb', () => {
+    const dir = makeTempDir();
+    fs.writeFileSync(path.join(dir, 'bun.lockb'), '');
+    expect(detectPackageManager(dir)).toBe('bun');
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it('detects bun from bun.lock (text format)', () => {
+    const dir = makeTempDir();
+    fs.writeFileSync(path.join(dir, 'bun.lock'), '');
+    expect(detectPackageManager(dir)).toBe('bun');
     fs.rmSync(dir, { recursive: true });
   });
 
@@ -121,5 +136,88 @@ describe('setupVSCodeTask', () => {
     expect(tasks.tasks[0].label).toBe('docs-sentinel: audit');
 
     fs.rmSync(dir, { recursive: true });
+  });
+
+  it('preserves existing tasks from JSONC file with inline and block comments', () => {
+    const dir = makeTempDir();
+    fs.mkdirSync(path.join(dir, '.vscode'), { recursive: true });
+
+    const jsonc = `{
+  // Version of the tasks format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build", // Build the project
+      "type": "shell",
+      "command": "npm run build"
+    }
+    /* more tasks can be added here */
+  ]
+}`;
+    fs.writeFileSync(path.join(dir, '.vscode/tasks.json'), jsonc);
+
+    setupVSCodeTask(dir);
+
+    const tasks = JSON.parse(
+      fs.readFileSync(path.join(dir, '.vscode/tasks.json'), 'utf-8'),
+    );
+    expect(tasks.tasks).toHaveLength(2);
+    expect(tasks.tasks[0].label).toBe('build');
+    expect(tasks.tasks[1].label).toBe('docs-sentinel: audit');
+
+    fs.rmSync(dir, { recursive: true });
+  });
+});
+
+describe('setupClaudeCodeHook with JSONC', () => {
+  it('preserves existing settings from JSONC file with comments', () => {
+    const dir = makeTempDir();
+    fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
+
+    const jsonc = `{
+  // My custom permissions
+  "permissions": {
+    "allow": ["Read"] // only read allowed
+  }
+  /* hooks will be added by tools */
+}`;
+    fs.writeFileSync(path.join(dir, '.claude/settings.json'), jsonc);
+
+    setupClaudeCodeHook(dir);
+
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(dir, '.claude/settings.json'), 'utf-8'),
+    );
+    expect(settings.permissions.allow).toEqual(['Read']);
+    expect(settings.hooks.PostToolUse).toHaveLength(1);
+
+    fs.rmSync(dir, { recursive: true });
+  });
+});
+
+describe('stripJsoncComments', () => {
+  it('strips single-line comments', () => {
+    const input = '{\n  // comment\n  "key": "value"\n}';
+    expect(JSON.parse(stripJsoncComments(input))).toEqual({ key: 'value' });
+  });
+
+  it('strips inline comments', () => {
+    const input = '{ "key": "value" // inline comment\n}';
+    expect(JSON.parse(stripJsoncComments(input))).toEqual({ key: 'value' });
+  });
+
+  it('strips block comments', () => {
+    const input = '{ /* block */ "key": "value" }';
+    expect(JSON.parse(stripJsoncComments(input))).toEqual({ key: 'value' });
+  });
+
+  it('preserves // inside strings', () => {
+    const input = '{ "url": "https://example.com" }';
+    expect(JSON.parse(stripJsoncComments(input))).toEqual({ url: 'https://example.com' });
+  });
+
+  it('handles escaped quotes inside strings', () => {
+    const input = '{ "msg": "say \\"hello\\"" }';
+    expect(JSON.parse(stripJsoncComments(input))).toEqual({ msg: 'say "hello"' });
   });
 });

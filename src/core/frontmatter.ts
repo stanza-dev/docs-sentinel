@@ -13,6 +13,7 @@ interface ParseResult {
   frontmatter: DocFrontmatter | null;
   content: string;
   isValid: boolean;
+  hasYamlFrontmatter: boolean;
 }
 
 export function parseFrontmatter(
@@ -21,30 +22,30 @@ export function parseFrontmatter(
 ): ParseResult {
   // Detect TOML frontmatter (not supported)
   if (rawContent.startsWith('+++')) {
-    return { frontmatter: null, content: rawContent, isValid: false };
+    return { frontmatter: null, content: rawContent, isValid: false, hasYamlFrontmatter: false };
   }
 
   let parsed: matter.GrayMatterFile<string>;
   try {
     parsed = matter(rawContent);
   } catch {
-    return { frontmatter: null, content: rawContent, isValid: false };
+    return { frontmatter: null, content: rawContent, isValid: false, hasYamlFrontmatter: false };
   }
 
   if (!parsed.data || Object.keys(parsed.data).length === 0) {
-    return { frontmatter: null, content: parsed.content, isValid: false };
+    return { frontmatter: null, content: parsed.content, isValid: false, hasYamlFrontmatter: false };
   }
 
   const key = config?.frontmatterKey;
   const data = key ? (parsed.data[key] as Record<string, unknown>) : parsed.data;
 
   if (!data) {
-    return { frontmatter: null, content: parsed.content, isValid: false };
+    return { frontmatter: null, content: parsed.content, isValid: false, hasYamlFrontmatter: true };
   }
 
   // Validate shape: must have status or references to be considered ours
   if (!data.status && !data.references) {
-    return { frontmatter: null, content: parsed.content, isValid: false };
+    return { frontmatter: null, content: parsed.content, isValid: false, hasYamlFrontmatter: true };
   }
 
   const fm: DocFrontmatter = {
@@ -58,7 +59,7 @@ export function parseFrontmatter(
     fm.feature = data.feature;
   }
 
-  return { frontmatter: fm, content: parsed.content, isValid: true };
+  return { frontmatter: fm, content: parsed.content, isValid: true, hasYamlFrontmatter: true };
 }
 
 export function generateFrontmatter(
@@ -113,7 +114,8 @@ export function serializeFrontmatter(
   data: Record<string, unknown>,
   bodyContent: string,
 ): string {
-  const result = matter.stringify(bodyContent, data);
+  const cleaned = JSON.parse(JSON.stringify(data));
+  const result = matter.stringify(bodyContent, cleaned);
   return result;
 }
 

@@ -1,11 +1,16 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 import {
   parseFrontmatter,
   generateFrontmatter,
+  serializeFrontmatter,
   mergeFrontmatter,
   inferCategory,
   inferFeature,
 } from '../src/core/frontmatter.js';
+import { runInit } from '../src/commands/init.js';
 
 describe('parseFrontmatter', () => {
   it('parses valid docs-sentinel frontmatter', () => {
@@ -29,7 +34,7 @@ describe('parseFrontmatter', () => {
     ]);
   });
 
-  it('returns isValid=false for frontmatter without status/references', () => {
+  it('returns isValid=false but hasYamlFrontmatter=true for non-sentinel frontmatter', () => {
     const raw = [
       '---',
       'title: My Doc',
@@ -40,6 +45,7 @@ describe('parseFrontmatter', () => {
 
     const result = parseFrontmatter(raw);
     expect(result.isValid).toBe(false);
+    expect(result.hasYamlFrontmatter).toBe(true);
   });
 
   it('returns isValid=false for TOML frontmatter', () => {
@@ -49,10 +55,11 @@ describe('parseFrontmatter', () => {
     expect(result.isValid).toBe(false);
   });
 
-  it('returns isValid=false for no frontmatter', () => {
+  it('returns hasYamlFrontmatter=false for no frontmatter', () => {
     const raw = '# Just a heading\n\nSome content.';
     const result = parseFrontmatter(raw);
     expect(result.isValid).toBe(false);
+    expect(result.hasYamlFrontmatter).toBe(false);
   });
 
   it('parses namespaced frontmatter with frontmatterKey', () => {
@@ -163,5 +170,73 @@ describe('inferFeature', () => {
 
   it('returns undefined when no feature directory', () => {
     expect(inferFeature('docs/README.md')).toBeUndefined();
+  });
+});
+
+describe('serializeFrontmatter', () => {
+  it('strips undefined values before serializing', () => {
+    const data = { status: 'active', feature: undefined, category: 'general' };
+    const result = serializeFrontmatter(data as Record<string, unknown>, '# Content');
+    expect(result).toContain('status: active');
+    expect(result).toContain('category: general');
+    expect(result).not.toContain('feature');
+  });
+});
+
+describe('init preserves existing frontmatter', () => {
+  function makeTempProject(): string {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-sentinel-fm-'));
+    fs.mkdirSync(path.join(dir, 'docs'), { recursive: true });
+    // Create a .git dir so findProjectRoot works
+    fs.mkdirSync(path.join(dir, '.git'), { recursive: true });
+    return dir;
+  }
+
+  it('preserves title and layout when adding docs-sentinel fields', async () => {
+    const dir = makeTempProject();
+
+    const docContent = [
+      '---',
+      'title: My Hugo Doc',
+      'layout: default',
+      '---',
+      '# Content',
+    ].join('\n');
+    fs.writeFileSync(path.join(dir, 'docs/my-doc.md'), docContent);
+
+    await runInit(dir, { tools: false });
+
+    const result = fs.readFileSync(path.join(dir, 'docs/my-doc.md'), 'utf-8');
+    expect(result).toContain('title: My Hugo Doc');
+    expect(result).toContain('layout: default');
+    expect(result).toContain('status: active');
+
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it('does not lose frontmatter for Astro/Jekyll docs without frontmatterKey', async () => {
+    const dir = makeTempProject();
+
+    const docContent = [
+      '---',
+      'title: Getting Started',
+      'sidebar_position: 1',
+      'description: How to get started',
+      '---',
+      '# Getting Started',
+      '',
+      'Welcome to the project.',
+    ].join('\n');
+    fs.writeFileSync(path.join(dir, 'docs/getting-started.md'), docContent);
+
+    await runInit(dir, { tools: false });
+
+    const result = fs.readFileSync(path.join(dir, 'docs/getting-started.md'), 'utf-8');
+    expect(result).toContain('title: Getting Started');
+    expect(result).toContain('sidebar_position: 1');
+    expect(result).toContain('description: How to get started');
+    expect(result).toContain('status: active');
+
+    fs.rmSync(dir, { recursive: true });
   });
 });

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { detectPackageManager, getRunnerCommand } from './detector.js';
+import { stripJsoncComments } from './jsonc.js';
 
 const HOOK_SCRIPT_TEMPLATE = (runner: string) => `#!/usr/bin/env node
 import { readFileSync } from 'node:fs';
@@ -57,9 +58,7 @@ export function setupClaudeCodeHook(projectRoot: string): boolean {
   if (fs.existsSync(settingsPath)) {
     try {
       const raw = fs.readFileSync(settingsPath, 'utf-8');
-      // Strip single-line comments (JSONC)
-      const stripped = raw.replace(/^\s*\/\/.*$/gm, '');
-      settings = JSON.parse(stripped);
+      settings = JSON.parse(stripJsoncComments(raw));
     } catch {
       // Can't parse, start fresh for hooks
     }

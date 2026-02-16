@@ -119,8 +119,26 @@ export async function runInit(
           }
         }
         frontmatterSkipped++;
+      } else if (doc.hasYamlFrontmatter) {
+        // Doc has YAML frontmatter but not docs-sentinel fields — merge to preserve existing fields
+        const refs = extractReferences(doc.content, config, doc.relativePath);
+        const { existing } = validateReferences(projectRoot, refs);
+
+        if (!options.dryRun) {
+          const updated = mergeFrontmatter(doc.rawContent, existing, config);
+          if (updated !== doc.rawContent) {
+            fs.writeFileSync(doc.filePath, updated, 'utf-8');
+          }
+        }
+
+        frontmatterAdded++;
+        if (options.dryRun) {
+          console.log(
+            pc.dim(`  Would add frontmatter: ${doc.relativePath} (${existing.length} refs)`),
+          );
+        }
       } else {
-        // Generate frontmatter
+        // No frontmatter at all — generate fresh
         const refs = extractReferences(doc.content, config, doc.relativePath);
         const { existing } = validateReferences(projectRoot, refs);
         const fm = generateFrontmatter(doc.relativePath, doc.content, existing);

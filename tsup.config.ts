@@ -1,4 +1,7 @@
 import { defineConfig } from 'tsup';
+import { readFileSync } from 'node:fs';
+
+const { version } = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 export default defineConfig([
   {
@@ -19,6 +22,9 @@ export default defineConfig([
     banner: { js: '#!/usr/bin/env node' },
     outExtension() {
       return { js: '.cjs' };
+    },
+    define: {
+      'PKG_VERSION': JSON.stringify(version),
     },
   },
 ]);

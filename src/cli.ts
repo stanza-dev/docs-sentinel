@@ -4,12 +4,14 @@ import { runCheck } from './commands/check.js';
 import { runAudit } from './commands/audit.js';
 import type { ReportFormat } from './types.js';
 
+declare const PKG_VERSION: string;
+
 const program = new Command();
 
 program
   .name('docs-sentinel')
   .description('Keep documentation fresh by tracking references between docs and source code')
-  .version('0.1.0');
+  .version(PKG_VERSION);
 
 program
   .command('init')

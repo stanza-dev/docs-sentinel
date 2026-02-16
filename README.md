@@ -19,10 +19,10 @@ docs-sentinel scans the markdown files that AI tools like Claude Code and Cursor
 ## Installation
 
 ```bash
-# Run directly with npx (no install needed)
-npx docs-sentinel init
+# pnpm
+pnpm add -D docs-sentinel
 
-# Or install as a dev dependency
+# npm
 npm install -D docs-sentinel
 ```
 

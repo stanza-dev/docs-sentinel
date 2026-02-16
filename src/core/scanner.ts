@@ -53,6 +53,7 @@ export async function scanDocs(
       filePath: absPath,
       relativePath,
       hasFrontmatter: parsed.isValid,
+      hasYamlFrontmatter: parsed.hasYamlFrontmatter,
       frontmatter: parsed.isValid ? parsed.frontmatter : null,
       content: parsed.content,
       rawContent,

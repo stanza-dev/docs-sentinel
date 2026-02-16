@@ -1,6 +1,6 @@
 {
   "name": "docs-sentinel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Keep your AI context docs in sync with source code",
   "type": "module",
   "exports": {
@@ -40,6 +40,10 @@
     "claude-code",
     "cursor"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stanza-dev/docs-sentinel.git"
+  },
   "author": "",
   "license": "MIT",
   "engines": {

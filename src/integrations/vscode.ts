@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { stripJsoncComments } from './jsonc.js';
 
 export function setupVSCodeTask(projectRoot: string): boolean {
   const tasksPath = path.join(projectRoot, '.vscode', 'tasks.json');
@@ -11,9 +12,7 @@ export function setupVSCodeTask(projectRoot: string): boolean {
   if (fs.existsSync(tasksPath)) {
     try {
       const raw = fs.readFileSync(tasksPath, 'utf-8');
-      // Strip JSONC comments
-      const stripped = raw.replace(/^\s*\/\/.*$/gm, '');
-      tasks = JSON.parse(stripped);
+      tasks = JSON.parse(stripJsoncComments(raw));
     } catch {
       // Can't parse, use default
     }

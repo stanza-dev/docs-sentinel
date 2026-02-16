@@ -22,7 +22,7 @@ export type PackageManager = 'pnpm' | 'yarn' | 'bun' | 'npm';
 export function detectPackageManager(projectRoot: string): PackageManager {
   if (fs.existsSync(path.join(projectRoot, 'pnpm-lock.yaml'))) return 'pnpm';
   if (fs.existsSync(path.join(projectRoot, 'yarn.lock'))) return 'yarn';
-  if (fs.existsSync(path.join(projectRoot, 'bun.lockb'))) return 'bun';
+  if (fs.existsSync(path.join(projectRoot, 'bun.lockb')) || fs.existsSync(path.join(projectRoot, 'bun.lock'))) return 'bun';
   return 'npm';
 }
 

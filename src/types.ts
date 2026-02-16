@@ -20,6 +20,7 @@ export interface ScannedDoc {
   filePath: string;
   relativePath: string;
   hasFrontmatter: boolean;
+  hasYamlFrontmatter: boolean;
   frontmatter: DocFrontmatter | null;
   content: string;
   rawContent: string;

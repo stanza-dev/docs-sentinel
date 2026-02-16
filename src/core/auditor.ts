@@ -186,81 +186,28 @@ async function getGitDates(
   const dates = new Map<string, Date>();
   const git = simpleGit(projectRoot);
 
-  // Batch: process files in groups of 200
-  const batchSize = 200;
-  for (let i = 0; i < files.length; i += batchSize) {
-    const batch = files.slice(i, i + batchSize);
-    const existingBatch = batch.filter((f) =>
-      fs.existsSync(path.resolve(projectRoot, f)),
-    );
-
-    if (existingBatch.length === 0) continue;
+  // Query each file individually to get its own last-modified date
+  for (const file of files) {
+    const absPath = path.resolve(projectRoot, file);
+    if (!fs.existsSync(absPath)) continue;
 
     try {
-      // Use git log to get the most recent commit timestamp for each file
       const result = await git.raw([
         'log',
         '-1',
         '--format=%ct',
         '--',
-        ...existingBatch,
+        file,
       ]);
-
-      const timestamp = parseInt(result.trim(), 10);
-      if (!isNaN(timestamp)) {
-        const date = new Date(timestamp * 1000);
-        for (const file of existingBatch) {
-          dates.set(file, date);
-        }
+      const ts = parseInt(result.trim(), 10);
+      if (!isNaN(ts)) {
+        dates.set(file, new Date(ts * 1000));
+      } else {
+        dates.set(file, fs.statSync(absPath).mtime);
       }
     } catch {
-      // Fall back to individual queries
-      for (const file of existingBatch) {
-        try {
-          const result = await git.raw([
-            'log',
-            '-1',
-            '--format=%ct',
-            '--',
-            file,
-          ]);
-          const ts = parseInt(result.trim(), 10);
-          if (!isNaN(ts)) {
-            dates.set(file, new Date(ts * 1000));
-          }
-        } catch {
-          // Use fs mtime as last resort
-          const absPath = path.resolve(projectRoot, file);
-          if (fs.existsSync(absPath)) {
-            dates.set(file, fs.statSync(absPath).mtime);
-          }
-        }
-      }
-    }
-  }
-
-  // For files without git dates, use individual git log
-  for (const file of files) {
-    if (dates.has(file)) continue;
-    try {
-      const absPath = path.resolve(projectRoot, file);
-      if (fs.existsSync(absPath)) {
-        const result = await git.raw([
-          'log',
-          '-1',
-          '--format=%ct',
-          '--',
-          file,
-        ]);
-        const ts = parseInt(result.trim(), 10);
-        if (!isNaN(ts)) {
-          dates.set(file, new Date(ts * 1000));
-        } else {
-          dates.set(file, fs.statSync(absPath).mtime);
-        }
-      }
-    } catch {
-      // ignore
+      // Fall back to fs mtime
+      dates.set(file, fs.statSync(absPath).mtime);
     }
   }
 
